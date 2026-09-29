@@ -1,21 +1,41 @@
 #!/bin/zsh
 # Removes the Witcher 3 5.00b CrossOver fix and restores the original files.
-# Usage: double-click, or run: ./uninstall.command ["/path/to/The Witcher 3/bin/x64_dx12"]
+# Usage: double-click, or run: ./uninstall.command ["/path/to/The Witcher 3"]
 set -e
+bottles="$HOME/Library/Application Support/CrossOver/Bottles"
+dirs=()
 if [ -n "$1" ]; then
-  dirs=("$1")
+  p="${1%/}"; [ -f "$p" ] && p="${p:h}"
+  for c in "$p" "$p/x64_dx12" "$p/bin/x64_dx12"; do
+    [ -f "$c/amd_fidelityfx_loader_dx12_orig.dll" ] && dirs+=("${c:A}")
+  done
 else
-  dirs=("${(@f)$(find "$HOME/Library/Application Support/CrossOver/Bottles" -path "*/bin/x64_dx12/amd_fidelityfx_loader_dx12_orig.dll" 2>/dev/null | sed 's|/amd_fidelityfx_loader_dx12_orig.dll$||')}")
+  # Bottles: don't follow links (dosdevices/z: points at the whole disk). External drives: limited depth.
+  for f in "${(@f)$(find "$bottles" -path "*/bin/x64_dx12/amd_fidelityfx_loader_dx12_orig.dll" 2>/dev/null)}"; do
+    [ -n "$f" ] && dirs+=("${f:h:A}")
+  done
+  for vol in /Volumes/*(N/); do
+    [ "${vol:A}" = "/" ] && continue
+    for f in "${(@f)$(find "$vol" -maxdepth 9 -path "*/bin/x64_dx12/amd_fidelityfx_loader_dx12_orig.dll" 2>/dev/null)}"; do
+      [ -n "$f" ] && dirs+=("${f:h:A}")
+    done
+  done
 fi
-dirs=(${dirs:#})
-[ ${#dirs} -gt 0 ] || { echo "No patched Witcher 3 install found."; exit 0; }
+dirs=(${(u)dirs:#})
+if [ ${#dirs} -eq 0 ]; then
+  echo "No patched Witcher 3 install found automatically."
+  echo "Drag your Witcher 3 folder into this window and press Enter (or just Enter to quit):"
+  read -r answer
+  [ -z "$answer" ] && exit 0
+  exec "$0" "${${answer//\\ / }//\"/}"
+fi
 
 for d in "${dirs[@]}"; do
   echo "Restoring: $d"
-  if [ -f "$d/amd_fidelityfx_loader_dx12_orig.dll" ]; then
-    mv -f "$d/amd_fidelityfx_loader_dx12_orig.dll" "$d/amd_fidelityfx_loader_dx12.dll"
-  fi
+  mv -f "$d/amd_fidelityfx_loader_dx12_orig.dll" "$d/amd_fidelityfx_loader_dx12.dll"
   bin="${d:h}"
-  [ -L "$bin/x64" ] && rm "$bin/x64"
+  if [ -L "$bin/x64" ]; then rm "$bin/x64"
+  elif [ -f "$bin/x64/.ffxproxy-copy" ]; then rm -rf "$bin/x64"
+  fi
   echo "  done"
 done

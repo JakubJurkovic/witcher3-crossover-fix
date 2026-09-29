@@ -18,9 +18,15 @@ Nothing else in the game is modified, and the proxy makes no network access.
 ## Install
 
 1. Download this repo (Code → Download ZIP) and unzip it.
-2. Double-click `install.command`. If macOS blocks it, right-click → Open. It searches all CrossOver bottles for the game (GOG or Steam).
-   - Or run it in Terminal with the path: `./install.command "/path/to/The Witcher 3/bin/x64_dx12"`
+2. Double-click `install.command`. If macOS blocks it, right-click → Open. It looks for the game in:
+   - every CrossOver bottle (GOG, Steam, EA...), including extra drive letters the bottle maps,
+   - Steam library folders listed in Steam's own config, even on other drives,
+   - external drives under `/Volumes`.
+
+   If it still can't find the game, it asks you to **drag the game folder into the window**. The game folder, its `bin` folder, or `witcher3.exe` all work. You can also pass the path in Terminal: `./install.command "/Volumes/MyDrive/SteamLibrary/steamapps/common/The Witcher 3"`
 3. Launch the game as usual.
+
+External drives work, including exFAT. If a drive can't store the `bin/x64` link, the installer copies the folder instead (about 650 MB) and refreshes that copy each time you run it.
 
 **Recommended in-game settings:** turn off HDR and NVIDIA DLSS/Reflex, and use FXAA or TAA for anti-aliasing. FSR is untested.
 
@@ -28,7 +34,7 @@ Nothing else in the game is modified, and the proxy makes no network access.
 
 ## Uninstall
 
-Double-click `uninstall.command`. It restores the original DLL and removes the symlink.
+Double-click `uninstall.command`. It restores the original DLL and removes the `bin/x64` link, or the copy. It searches the same places as the installer and also accepts a dragged folder.
 
 ## Known limits
 
