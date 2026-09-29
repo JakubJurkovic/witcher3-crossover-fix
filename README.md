@@ -1,0 +1,54 @@
+# Witcher 3 Remastered (5.00b) black screen fix for CrossOver on Mac
+
+The Witcher 3 Remastered patch 5.00b (released 28 Sep 2026) hangs on a black screen under CrossOver 26.3 / D3DMetal 3.0. This fix gets it to the main menu at 60 fps on an M1 Pro.
+
+## What goes wrong
+
+1. **CrossOver redirects the game to a folder that doesn't exist.** CrossOver has a built-in tweak that swaps `bin\x64_dx12\witcher3.exe` for `bin\x64\witcher3.exe`, the old DX11 build. Patch 5.00b is DX12-only and no longer ships `bin\x64`, so the game fails to launch ("Path not found").
+2. **D3DMetal crashes on one pipeline.** During startup the game creates a single *stream-output* graphics pipeline (geometry shader, no pixel shader). Compiling it crashes Apple's shader converter (`libmetalirconverter.dylib`). The game's crash handler then deadlocks, which leaves you with a black window at 100% CPU.
+
+## What the fix does
+
+- Adds a symlink `bin/x64 → x64_dx12` so CrossOver's redirect lands on the real DX12 build.
+- Replaces `amd_fidelityfx_loader_dx12.dll` with a small proxy. The original is kept as `amd_fidelityfx_loader_dx12_orig.dll` and every FidelityFX call is forwarded to it unchanged. The proxy also hooks the game's D3D12 device and refuses stream-output pipelines before they reach D3DMetal. The game continues without that pipeline.
+
+Nothing else in the game is modified, and the proxy makes no network access.
+
+## Install
+
+1. Download this repo (Code → Download ZIP) and unzip it.
+2. Double-click `install.command`. If macOS blocks it, right-click → Open. It searches all CrossOver bottles for the game (GOG or Steam).
+   - Or run it in Terminal with the path: `./install.command "/path/to/The Witcher 3/bin/x64_dx12"`
+3. Launch the game as usual.
+
+**Recommended in-game settings:** turn off HDR and NVIDIA DLSS/Reflex, and use FXAA or TAA for anti-aliasing. FSR is untested.
+
+**After a game update or "Verify files", run `install.command` again.** The launcher restores the original DLL.
+
+## Uninstall
+
+Double-click `uninstall.command`. It restores the original DLL and removes the symlink.
+
+## Known limits
+
+- Tested on: M1 Pro, macOS 26, CrossOver 26.3, GOG version 5.00b. Steam should work the same way but hasn't been tested.
+- The refused pipeline may mean a visual effect is missing in-game.
+- A log is written to `drive_c/users/crossover/ffxproxy.log` inside the bottle.
+
+## Build it yourself
+
+The DLL is built from `ffxproxy.c` (single file, no dependencies) with Zig as the cross-compiler:
+
+```sh
+python3 -m venv venv && venv/bin/pip install ziglang
+venv/bin/python -m ziglang cc -target x86_64-windows-gnu -shared -O2 -o amd_fidelityfx_loader_dx12.dll ffxproxy.c
+```
+
+SHA-256 of the released DLL:
+`bb8b7e4bcbbd68df31e4517a5863b7f447b04b5e3c554f99132ea700efc7d980`
+
+Optional environment variables: `FFXPROXY_DUMP=1` dumps shaders to `%USERPROFILE%\ffxdump`, and `FFXPROXY_STUB_FSR=1` gives FSR a dummy context.
+
+## License
+
+MIT. Not affiliated with CD PROJEKT RED, CodeWeavers, Apple or AMD.
