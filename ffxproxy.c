@@ -349,6 +349,14 @@ BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved)
             CreateDirectoryA(dumpDir, NULL);
         }
         logmsg("ffxproxy attached");
+        /* The game calls SetProcessDPIAware only after it has enumerated display modes, so with
+           CrossOver's High Resolution Mode it sees a half-size virtual desktop and caps out at
+           1512x982. Declaring DPI awareness this early exposes the real resolutions. */
+        if (!getenv("FFXPROXY_NO_DPI")) {
+            HMODULE u32 = GetModuleHandleA("user32.dll");
+            BOOL (WINAPI *setAware)(void) = u32 ? (BOOL (WINAPI *)(void))GetProcAddress(u32, "SetProcessDPIAware") : NULL;
+            logmsg("SetProcessDPIAware %s", setAware && setAware() ? "ok" : "failed");
+        }
     }
     return TRUE;
 }

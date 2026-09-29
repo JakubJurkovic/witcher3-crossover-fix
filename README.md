@@ -11,6 +11,7 @@ The Witcher 3 Remastered patch 5.00b (released 28 Sep 2026) hangs on a black scr
 
 - Adds a symlink `bin/x64 → x64_dx12` so CrossOver's redirect lands on the real DX12 build.
 - Replaces `amd_fidelityfx_loader_dx12.dll` with a small proxy. The original is kept as `amd_fidelityfx_loader_dx12_orig.dll` and every FidelityFX call is forwarded to it unchanged. The proxy also hooks the game's D3D12 device and refuses stream-output pipelines before they reach D3DMetal. The game continues without that pipeline.
+- Marks the game as DPI-aware at startup. Otherwise, with CrossOver's **High Resolution Mode** on, the game only sees a half-size virtual screen and tops out at 1512×982 on a 14" MacBook Pro. With this, resolutions like 1920×1200 or the full native size show up. Mac screens are 16:10, so choose 1920×1200 rather than 1920×1080.
 
 Nothing else in the game is modified, and the proxy makes no network access.
 
@@ -45,9 +46,9 @@ venv/bin/python -m ziglang cc -target x86_64-windows-gnu -shared -O2 -o amd_fide
 ```
 
 SHA-256 of the released DLL:
-`bb8b7e4bcbbd68df31e4517a5863b7f447b04b5e3c554f99132ea700efc7d980`
+`46862167d7471bd41deee3edb11665b3dcecc86f20fe4ddcd666764cefe1827a`
 
-Optional environment variables: `FFXPROXY_DUMP=1` dumps shaders to `%USERPROFILE%\ffxdump`, and `FFXPROXY_STUB_FSR=1` gives FSR a dummy context.
+Optional environment variables: `FFXPROXY_DUMP=1` dumps shaders to `%USERPROFILE%\ffxdump`, `FFXPROXY_STUB_FSR=1` gives FSR a dummy context, and `FFXPROXY_NO_DPI=1` turns off the DPI-awareness change.
 
 ## License
 
