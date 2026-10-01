@@ -1,3 +1,5 @@
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F2J527ZLUN)
+
 # Witcher 3 Remastered (5.00b) black screen fix for CrossOver on Mac
 
 The Witcher 3 Remastered patch 5.00b (released 28 Sep 2026) hangs on a black screen under CrossOver 26.3 / D3DMetal 3.0. This fix gets it to the main menu at 60 fps on an M1 Pro.
